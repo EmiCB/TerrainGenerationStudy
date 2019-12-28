@@ -1,0 +1,24 @@
+﻿<Properties StartupConfiguration="{AC13F3FA-8FAA-BF40-2AF2-3DB120ABC944}|">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Editor/MapGeneratorEditor.cs">
+    <Files>
+      <File FileName="Assets/Scripts/Noise.cs" Line="21" Column="1" />
+      <File FileName="Assets/Scripts/MapGenerator.cs" Line="19" Column="32" />
+      <File FileName="Assets/Scripts/MapDisplay.cs" Line="32" Column="1" />
+      <File FileName="Assets/Editor/MapGeneratorEditor.cs" Line="1" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="TerrainGenerationStudy" expanded="True" selected="True" />
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.ItemProperties.Assembly-CSharp PreferredExecutionTarget="1654d34d-b05e-4cf0-8284-fdc2bd7729ca" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>
