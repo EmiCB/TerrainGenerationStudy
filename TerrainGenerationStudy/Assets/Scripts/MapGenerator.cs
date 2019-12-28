@@ -11,6 +11,9 @@ public class MapGenerator : MonoBehaviour {
     // noise properties
     public float noiseScale;
 
+    // editor settings
+    public bool autoUpdate;
+
     // create noise map and draw onto plane
     public void GenerateMap() {
         // create noise map using Perlin Noise
