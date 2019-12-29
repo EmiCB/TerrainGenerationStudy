@@ -5,7 +5,7 @@ using UnityEngine;
 // attatch to game object
 public class MapGenerator : MonoBehaviour {
     // easily swap what type of map to display
-    public enum DrawMode {NoiseMap, ColorMap};
+    public enum DrawMode {NoiseMap, ColorMap, Mesh};
     public DrawMode drawMode;
 
     // map dimensions
@@ -16,7 +16,7 @@ public class MapGenerator : MonoBehaviour {
     public int seed;
     public float noiseScale;
     public int octaves;
-    [Range(0,1)]
+    [Range(0,1)]                //make persistence value into a slider
     public float persistence;
     public float lacunarity;
 
@@ -59,8 +59,15 @@ public class MapGenerator : MonoBehaviour {
         MapDisplay display = FindObjectOfType<MapDisplay>();
 
         // check draw mode and display map accordingly
-        if (drawMode == DrawMode.NoiseMap) display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
-        else if (drawMode == DrawMode.ColorMap) display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, mapWidth, mapHeight));
+        if (drawMode == DrawMode.NoiseMap) {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
+        }
+        else if (drawMode == DrawMode.ColorMap) {
+            display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, mapWidth, mapHeight));
+        }
+        else if (drawMode == DrawMode.Mesh) {
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap), TextureGenerator.TextureFromColorMap(colorMap, mapWidth, mapHeight));
+        }
     }
 
     // called whenever a value is changed
