@@ -8,9 +8,12 @@ public class MapGenerator : MonoBehaviour {
     public enum DrawMode {NoiseMap, ColorMap, Mesh};
     public DrawMode drawMode;
 
-    // map dimensions
-    public int mapWidth;
-    public int mapHeight;
+    // size for each mesh chunk
+    const int mapChunkSize = 241;
+
+    // defines how many vertices to account for
+    [Range(0,6)]                //make level of detail value into a slider
+    public int levelOfDetail;
 
     // noise properties
     public int seed;
@@ -23,6 +26,10 @@ public class MapGenerator : MonoBehaviour {
     // allows for scrolling around the map
     public Vector2 offset;
 
+    // mesh settings
+    public float meshHeightMultiplier;
+    public AnimationCurve meshHeightCurve;
+
     // editor settings
     public bool autoUpdate;
 
@@ -32,14 +39,14 @@ public class MapGenerator : MonoBehaviour {
     // create noise map and draw onto plane
     public void GenerateMap() {
         // create noise map using Perlin Noise
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapWidth, mapHeight, seed, noiseScale, octaves, persistence, lacunarity, offset);
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, offset);
 
         // array of all pixel colors, region colors will be stored to it
-        Color[] colorMap = new Color[mapWidth * mapHeight];
+        Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
 
         // loop through noise map to assign regions
-        for (int y = 0; y < mapHeight; y++) {
-            for (int x = 0; x < mapWidth; x++) {
+        for (int y = 0; y < mapChunkSize; y++) {
+            for (int x = 0; x < mapChunkSize; x++) {
                 // get current height of point
                 float currentHeight = noiseMap[x, y];
 
@@ -48,7 +55,7 @@ public class MapGenerator : MonoBehaviour {
                     // check if height value is within region's height range
                     if (currentHeight <= regions[i].height) {
                         //save new region color to point and exit loop (no need to check other regions)
-                        colorMap[y * mapWidth + x] = regions[i].color;
+                        colorMap[y * mapChunkSize + x] = regions[i].color;
                         break;
                     }
                 }
@@ -63,18 +70,16 @@ public class MapGenerator : MonoBehaviour {
             display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
         }
         else if (drawMode == DrawMode.ColorMap) {
-            display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, mapWidth, mapHeight));
+            display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize));
         }
         else if (drawMode == DrawMode.Mesh) {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap), TextureGenerator.TextureFromColorMap(colorMap, mapWidth, mapHeight));
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail), TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize));
         }
     }
 
     // called whenever a value is changed
     private void OnValidate() {
         // clamp values
-        if (mapWidth < 1) mapWidth = 1;
-        if (mapHeight < 1) mapHeight = 1;
         if (lacunarity < 1) lacunarity = 1;
         if (octaves < 0) octaves = 0;
     }
