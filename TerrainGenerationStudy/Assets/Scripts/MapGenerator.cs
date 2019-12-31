@@ -9,7 +9,7 @@ public class MapGenerator : MonoBehaviour {
     public DrawMode drawMode;
 
     // size for each mesh chunk
-    const int mapChunkSize = 241;
+    public const int mapChunkSize = 241;
 
     // defines how many vertices to account for
     [Range(0,6)]                //make level of detail value into a slider

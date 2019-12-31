@@ -1,13 +1,21 @@
 ﻿<Properties StartupConfiguration="{AC13F3FA-8FAA-BF40-2AF2-3DB120ABC944}|">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/MapGenerator.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/EndlessTerrain.cs">
     <Files>
-      <File FileName="Assets/Scripts/MapGenerator.cs" Line="19" Column="71" />
-      <File FileName="Assets/Scripts/MeshGenerator.cs" Line="27" Column="98" />
+      <File FileName="Assets/Scripts/MapGenerator.cs" Line="82" Column="24" />
+      <File FileName="Assets/Scripts/MeshGenerator.cs" Line="43" Column="92" />
+      <File FileName="Assets/Scripts/EndlessTerrain.cs" Line="1" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
-          <Node name="TerrainGenerationStudy" expanded="True" selected="True" />
+          <Node name="TerrainGenerationStudy" expanded="True">
+            <Node name="Assets" expanded="True">
+              <Node name="Editor" expanded="True" />
+              <Node name="Scripts" expanded="True">
+                <Node name="EndlessTerrain.cs" selected="True" />
+              </Node>
+            </Node>
+          </Node>
         </State>
       </Pad>
     </Pads>
