@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Threading;
 
 // attatch to game object
 public class MapGenerator : MonoBehaviour {
@@ -36,8 +38,103 @@ public class MapGenerator : MonoBehaviour {
     // list of terrain types
     public TerrainTypes[] regions;
 
+    // queues for threading
+    Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+    Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+
+    // checks draw mode and displays corresponding map in editor
+    public void DrawMapInEditor() {
+        // import map data from map generating function
+        MapData mapData = GenerateMapData();
+
+        // display map on plane
+        MapDisplay display = FindObjectOfType<MapDisplay>();
+
+        // check draw mode and display map accordingly
+        if (drawMode == DrawMode.NoiseMap) {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(mapData.heightMap));
+        }
+        else if (drawMode == DrawMode.ColorMap) {
+            display.DrawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+        }
+        else if (drawMode == DrawMode.Mesh) {
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+        }
+    }
+
+    // method to pass into EndlessTerrain for threading, starts MapDataThread
+    public void RequestMapData(Action<MapData> callback) {
+        // represents MapDataThread
+        ThreadStart threadStart = delegate {
+            MapDataThread(callback);
+	    };
+
+        // runs MapDataThread
+        new Thread(threadStart).Start();
+    }
+
+    // threading for map data
+    void MapDataThread(Action<MapData> callback) {
+        // get map data
+        MapData mapData = GenerateMapData();
+
+        // add map data and callback to queue (locked to prevent multiple threads from executing at same time)
+        lock (mapDataThreadInfoQueue) {
+            mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
+        }
+    }
+
+    // method to pass into EndlessTerrain for threading, starts MeshDataThread
+    public void RequestMeshData(MapData mapData, Action<MeshData> callback) {
+        // represents MeshDataThread
+        ThreadStart threadStart = delegate {
+            MeshDataThread(mapData, callback);
+        };
+
+        // runs MeshDataThread
+        new Thread(threadStart).Start();
+    }
+
+    // threading for map data
+    public void MeshDataThread(MapData mapData, Action<MeshData> callback) {
+        // make mesh data using giving map data 
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail);
+
+        // add mesh data and callback to queue (locked to prevent multiple threads from executing at same time)
+        lock (meshDataThreadInfoQueue) {
+            meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
+        }
+    }
+
+    // main update loop, runs every frame
+    void Update() {
+        // check if map data queue has something in it
+        if (mapDataThreadInfoQueue.Count > 0) {
+            // loop through elements in queue
+            for (int i = 0; i < mapDataThreadInfoQueue.Count; i++) {
+                // set thread info to next thing in queue
+                MapThreadInfo<MapData> threadInfo = mapDataThreadInfoQueue.Dequeue();
+
+                // call callback with map data
+                threadInfo.callback(threadInfo.parameter);
+            }
+        }
+
+        // check if mesh data queue has something in it
+        if (meshDataThreadInfoQueue.Count > 0) {
+            // loop through elements in queue
+            for (int i = 0; i < meshDataThreadInfoQueue.Count; i++) {
+                // set thread info to next thing in queue
+                MapThreadInfo<MeshData> threadInfo = meshDataThreadInfoQueue.Dequeue();
+
+                // call callback with map data
+                threadInfo.callback(threadInfo.parameter);
+            }
+        }
+    }
+
     // create noise map and draw onto plane
-    public void GenerateMap() {
+    MapData GenerateMapData() {
         // create noise map using Perlin Noise
         float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, offset);
 
@@ -62,19 +159,7 @@ public class MapGenerator : MonoBehaviour {
             }
         }
 
-        // display map on plane
-        MapDisplay display = FindObjectOfType<MapDisplay>();
-
-        // check draw mode and display map accordingly
-        if (drawMode == DrawMode.NoiseMap) {
-            display.DrawTexture(TextureGenerator.TextureFromHeightMap(noiseMap));
-        }
-        else if (drawMode == DrawMode.ColorMap) {
-            display.DrawTexture(TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize));
-        }
-        else if (drawMode == DrawMode.Mesh) {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(noiseMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail), TextureGenerator.TextureFromColorMap(colorMap, mapChunkSize, mapChunkSize));
-        }
+        return new MapData(noiseMap, colorMap);
     }
 
     // called whenever a value is changed
@@ -82,6 +167,18 @@ public class MapGenerator : MonoBehaviour {
         // clamp values
         if (lacunarity < 1) lacunarity = 1;
         if (octaves < 0) octaves = 0;
+    }
+
+    // hold callbacks and map or mesh data
+    struct MapThreadInfo<T> {
+        public readonly Action<T> callback;
+        public readonly T parameter;
+
+        // constructor
+        public MapThreadInfo(Action<T> callback, T parameter) {
+            this.callback = callback;
+            this.parameter = parameter;
+        }
     }
 }
 
@@ -91,4 +188,16 @@ public struct TerrainTypes {
     public string name;
     public float height;
     public Color color;
+}
+
+// store noise map and color map information
+public struct MapData {
+    public readonly float[,] heightMap;
+    public readonly Color[] colorMap;
+
+    // constructor
+    public MapData(float[,] heightMap, Color[] colorMap) {
+        this.heightMap = heightMap;
+        this.colorMap = colorMap;
+    }
 }

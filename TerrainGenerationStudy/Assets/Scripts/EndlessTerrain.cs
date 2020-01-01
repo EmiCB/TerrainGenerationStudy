@@ -13,6 +13,11 @@ public class EndlessTerrain : MonoBehaviour {
     int chunkSize;
     int chunksVisibleInViewDst;
 
+    public Material mapMaterial;
+
+    // reference to map generator
+    static MapGenerator mapGenerator;
+
     // keep track of all coordinates and chunks to prevent duplicates
     Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
 
@@ -21,6 +26,8 @@ public class EndlessTerrain : MonoBehaviour {
 
     // runs once at the beginning of play mode
     void Start() {
+        // locate map generator
+        mapGenerator = FindObjectOfType<MapGenerator>();
         // get chunk size from map generator class
         chunkSize = MapGenerator.mapChunkSize - 1;
         // calculate how many chunks player can see
@@ -66,7 +73,7 @@ public class EndlessTerrain : MonoBehaviour {
                 }
                 // create new chunk if one does not already exist
                 else {
-                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, chunkSize, transform));
+                    terrainChunkDictionary.Add(viewedChunkCoord, new TerrainChunk(viewedChunkCoord, chunkSize, transform, mapMaterial));
                 }
             }
         }
@@ -74,8 +81,10 @@ public class EndlessTerrain : MonoBehaviour {
 
     // represents each terrain chunk
     public class TerrainChunk {
-        // plane for mesh
+        // mesh and its components
         GameObject meshObject;
+        MeshRenderer meshRenderer;
+        MeshFilter meshFilter;
 
         // position (x, z) of chunk in scene
         Vector2 position;
@@ -84,7 +93,7 @@ public class EndlessTerrain : MonoBehaviour {
         Bounds bounds;
 
         // constructor
-        public TerrainChunk(Vector2 coord, int size, Transform parent) {
+        public TerrainChunk(Vector2 coord, int size, Transform parent, Material material) {
             // find position of chunk
             position = coord * size;
             Vector3 positionV3 = new Vector3(position.x, 0, position.y);
@@ -92,16 +101,32 @@ public class EndlessTerrain : MonoBehaviour {
             // create axis-aligned bounding box for chunk
             bounds = new Bounds(position, Vector2.one * size);
 
-            // instantiate new object in new position
-            meshObject = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            // instantiate new terrain chunk at new position
+            meshObject = new GameObject("Terrain Chunk");
+            meshRenderer = meshObject.AddComponent<MeshRenderer>();
+            meshFilter = meshObject.AddComponent<MeshFilter>();
+            meshRenderer.material = material;
             meshObject.transform.position = positionV3;
-            meshObject.transform.localScale = Vector3.one * size / 10.0f;
 
             // set to parent to keep hierarchy nice
             meshObject.transform.parent = parent;
 
             // chunk invisible by default
             SetVisible(false);
+
+            // get map data from map generator
+            mapGenerator.RequestMapData(OnMapDataRecieved);
+        }
+
+        // executes when map data is recieved form map generator
+        void OnMapDataRecieved(MapData mapData) {
+            mapGenerator.RequestMeshData(mapData, OnMeshDataRecieved);
+        }
+
+        // executes when mesh data is recieved form map generator
+        void OnMeshDataRecieved(MeshData meshData) {
+            // create new mesh based on data received
+            meshFilter.mesh = meshData.CreateMesh();
         }
 
         // make terrain chunk update itself

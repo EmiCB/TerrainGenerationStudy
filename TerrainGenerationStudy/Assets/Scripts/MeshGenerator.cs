@@ -5,8 +5,11 @@ using UnityEngine;
 // will not be attached to gameobject nor have multiple instances
 public static class MeshGenerator {
     // create mesh for terrain using a given height map
-    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve heightCurve, int levelOfDetail) {
-		// find height map dimensions
+    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve, int levelOfDetail) {
+        // height curve to fix threading issues
+        AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
+
+        // find height map dimensions
 		int width = heightMap.GetLength(0);
 		int height = heightMap.GetLength(1);
 
