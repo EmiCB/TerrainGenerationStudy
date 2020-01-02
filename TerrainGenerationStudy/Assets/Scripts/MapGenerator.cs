@@ -15,7 +15,7 @@ public class MapGenerator : MonoBehaviour {
 
     // defines how many vertices to account for
     [Range(0,6)]                //make level of detail value into a slider
-    public int levelOfDetail;
+    public int editorPreviewLOD;
 
     // noise properties
     public int seed;
@@ -45,7 +45,7 @@ public class MapGenerator : MonoBehaviour {
     // checks draw mode and displays corresponding map in editor
     public void DrawMapInEditor() {
         // import map data from map generating function
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(Vector2.zero);
 
         // display map on plane
         MapDisplay display = FindObjectOfType<MapDisplay>();
@@ -58,15 +58,15 @@ public class MapGenerator : MonoBehaviour {
             display.DrawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
         else if (drawMode == DrawMode.Mesh) {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
     }
 
     // method to pass into EndlessTerrain for threading, starts MapDataThread
-    public void RequestMapData(Action<MapData> callback) {
+    public void RequestMapData(Vector2 center, Action<MapData> callback) {
         // represents MapDataThread
         ThreadStart threadStart = delegate {
-            MapDataThread(callback);
+            MapDataThread(center, callback);
 	    };
 
         // runs MapDataThread
@@ -74,9 +74,9 @@ public class MapGenerator : MonoBehaviour {
     }
 
     // threading for map data
-    void MapDataThread(Action<MapData> callback) {
+    void MapDataThread(Vector2 center, Action<MapData> callback) {
         // get map data
-        MapData mapData = GenerateMapData();
+        MapData mapData = GenerateMapData(center);
 
         // add map data and callback to queue (locked to prevent multiple threads from executing at same time)
         lock (mapDataThreadInfoQueue) {
@@ -85,10 +85,10 @@ public class MapGenerator : MonoBehaviour {
     }
 
     // method to pass into EndlessTerrain for threading, starts MeshDataThread
-    public void RequestMeshData(MapData mapData, Action<MeshData> callback) {
+    public void RequestMeshData(MapData mapData, int lod, Action<MeshData> callback) {
         // represents MeshDataThread
         ThreadStart threadStart = delegate {
-            MeshDataThread(mapData, callback);
+            MeshDataThread(mapData, lod, callback);
         };
 
         // runs MeshDataThread
@@ -96,9 +96,9 @@ public class MapGenerator : MonoBehaviour {
     }
 
     // threading for map data
-    public void MeshDataThread(MapData mapData, Action<MeshData> callback) {
+    public void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback) {
         // make mesh data using giving map data 
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, levelOfDetail);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
 
         // add mesh data and callback to queue (locked to prevent multiple threads from executing at same time)
         lock (meshDataThreadInfoQueue) {
@@ -134,9 +134,9 @@ public class MapGenerator : MonoBehaviour {
     }
 
     // create noise map and draw onto plane
-    MapData GenerateMapData() {
+    MapData GenerateMapData(Vector2 center) {
         // create noise map using Perlin Noise
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, offset);
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, center + offset);
 
         // array of all pixel colors, region colors will be stored to it
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
