@@ -4,6 +4,9 @@ using UnityEngine;
 
 // attatch to game object
 public class EndlessTerrain : MonoBehaviour {
+    // scale terrain uniformly
+    const float scale = 1.0f;
+
     // store info for diffrent detail levels
     public LODInfo[] detailLevels;
 
@@ -28,7 +31,7 @@ public class EndlessTerrain : MonoBehaviour {
     Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
 
     // keep track of last visible chunks
-    List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
+    static List<TerrainChunk> terrainChunksVisibleLastUpdate = new List<TerrainChunk>();
 
     // runs once at the beginning of play mode
     void Start() {
@@ -51,7 +54,7 @@ public class EndlessTerrain : MonoBehaviour {
     // main update loop, runs every frame
     void Update() {
         // update position of player
-        viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
+        viewerPosition = new Vector2(viewer.position.x, viewer.position.z) / scale;
 
         // update chunks after player has moved a certain distance
         if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate) {
@@ -83,10 +86,6 @@ public class EndlessTerrain : MonoBehaviour {
                 // check if chunk exists, update chunk if it does
                 if (terrainChunkDictionary.ContainsKey(viewedChunkCoord)) {
                     terrainChunkDictionary[viewedChunkCoord].UpdateTerrainChunk();
-                    // add chunk to list of visible chunks from last update
-                    if (terrainChunkDictionary[viewedChunkCoord].IsVisible()) {
-                        terrainChunksVisibleLastUpdate.Add(terrainChunkDictionary[viewedChunkCoord]);
-                    }
                 }
                 // create new chunk if one does not already exist
                 else {
@@ -136,7 +135,8 @@ public class EndlessTerrain : MonoBehaviour {
             meshRenderer = meshObject.AddComponent<MeshRenderer>();
             meshFilter = meshObject.AddComponent<MeshFilter>();
             meshRenderer.material = material;
-            meshObject.transform.position = positionV3;
+            meshObject.transform.position = positionV3 * scale;
+            meshObject.transform.localScale = Vector3.one * scale;
 
             // set to parent to keep hierarchy nice
             meshObject.transform.parent = parent;
@@ -210,6 +210,9 @@ public class EndlessTerrain : MonoBehaviour {
                             lodMesh.RequestMesh(mapData);
                         }
                     }
+
+                    // add self to visible last update list
+                    terrainChunksVisibleLastUpdate.Add(this);
                 }
 
                 // set chunk visibility

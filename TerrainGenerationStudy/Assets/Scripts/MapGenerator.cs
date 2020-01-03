@@ -10,6 +10,9 @@ public class MapGenerator : MonoBehaviour {
     public enum DrawMode {NoiseMap, ColorMap, Mesh};
     public DrawMode drawMode;
 
+    // get normalize mode
+    public Noise.NormalizeMode normalizeMode;
+
     // size for each mesh chunk
     public const int mapChunkSize = 241;
 
@@ -136,7 +139,7 @@ public class MapGenerator : MonoBehaviour {
     // create noise map and draw onto plane
     MapData GenerateMapData(Vector2 center) {
         // create noise map using Perlin Noise
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, center + offset);
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, center + offset, normalizeMode);
 
         // array of all pixel colors, region colors will be stored to it
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];
@@ -150,9 +153,12 @@ public class MapGenerator : MonoBehaviour {
                 // loop through regions and assign them to points
                 for (int i = 0; i < regions.Length; i++) {
                     // check if height value is within region's height range
-                    if (currentHeight <= regions[i].height) {
-                        //save new region color to point and exit loop (no need to check other regions)
+                    if (currentHeight >= regions[i].height) {
+                        //save new region color to point
                         colorMap[y * mapChunkSize + x] = regions[i].color;
+                    }
+                    // break when value is less than region's height
+                    else {
                         break;
                     }
                 }
