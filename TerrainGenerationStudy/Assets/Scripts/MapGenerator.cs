@@ -7,7 +7,7 @@ using System.Threading;
 // attatch to game object
 public class MapGenerator : MonoBehaviour {
     // easily swap what type of map to display
-    public enum DrawMode {NoiseMap, ColorMap, Mesh};
+    public enum DrawMode {NoiseMap, ColorMap, Mesh, FalloffMap};
     public DrawMode drawMode;
 
     // get normalize mode
@@ -35,15 +35,26 @@ public class MapGenerator : MonoBehaviour {
     public float meshHeightMultiplier;
     public AnimationCurve meshHeightCurve;
 
+    // generation settings
+    public bool useFalloff;
+
     // editor settings
     public bool autoUpdate;
 
     // list of terrain types
     public TerrainTypes[] regions;
 
+    // store falloff map
+    float[,] falloffMap;
+
     // queues for threading
     Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
     Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+
+    // runs once before game starts
+    void Awake() {
+        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+    }
 
     // checks draw mode and displays corresponding map in editor
     public void DrawMapInEditor() {
@@ -62,6 +73,9 @@ public class MapGenerator : MonoBehaviour {
         }
         else if (drawMode == DrawMode.Mesh) {
             display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+        }
+        else if (drawMode == DrawMode.FalloffMap) {
+            display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize)));
         }
     }
 
@@ -147,6 +161,12 @@ public class MapGenerator : MonoBehaviour {
         // loop through noise map to assign regions
         for (int y = 0; y < mapChunkSize; y++) {
             for (int x = 0; x < mapChunkSize; x++) {
+                // check if falloff map is being used
+                if (useFalloff) {
+                    // subtract falloff from map
+                    noiseMap[x, y] = Mathf.Clamp01(noiseMap[x, y] - falloffMap[x, y]);
+                }
+
                 // get current height of point
                 float currentHeight = noiseMap[x, y];
 
@@ -173,6 +193,9 @@ public class MapGenerator : MonoBehaviour {
         // clamp values
         if (lacunarity < 1) lacunarity = 1;
         if (octaves < 0) octaves = 0;
+
+        // generate falloff map (in case Awake() has not been called)
+        falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
     }
 
     // hold callbacks and map or mesh data
