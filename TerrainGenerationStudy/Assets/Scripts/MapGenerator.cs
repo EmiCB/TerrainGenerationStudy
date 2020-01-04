@@ -13,8 +13,8 @@ public class MapGenerator : MonoBehaviour {
     // get normalize mode
     public Noise.NormalizeMode normalizeMode;
 
-    // size for each mesh chunk
-    public const int mapChunkSize = 241;
+    // size for each mesh chunk (was 241, but subtracted 2 since border adds 2)
+    public const int mapChunkSize = 239;
 
     // defines how many vertices to account for
     [Range(0,6)]                //make level of detail value into a slider
@@ -152,8 +152,8 @@ public class MapGenerator : MonoBehaviour {
 
     // create noise map and draw onto plane
     MapData GenerateMapData(Vector2 center) {
-        // create noise map using Perlin Noise
-        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize, mapChunkSize, seed, noiseScale, octaves, persistence, lacunarity, center + offset, normalizeMode);
+        // create noise map using Perlin Noise (add 2 to account for border)
+        float[,] noiseMap = Noise.GenerateNoiseMap(mapChunkSize + 2, mapChunkSize + 2, seed, noiseScale, octaves, persistence, lacunarity, center + offset, normalizeMode);
 
         // array of all pixel colors, region colors will be stored to it
         Color[] colorMap = new Color[mapChunkSize * mapChunkSize];

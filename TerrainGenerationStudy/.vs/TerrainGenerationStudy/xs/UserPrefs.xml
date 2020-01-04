@@ -1,11 +1,8 @@
 ﻿<Properties StartupConfiguration="{AC13F3FA-8FAA-BF40-2AF2-3DB120ABC944}|">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/FalloffGenerator.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/MeshGenerator.cs">
     <Files>
-      <File FileName="Assets/Scripts/MapGenerator.cs" Line="160" Column="69" />
-      <File FileName="Assets/Scripts/MeshGenerator.cs" />
-      <File FileName="Assets/Scripts/EndlessTerrain.cs" Line="57" Column="84" />
-      <File FileName="Assets/Scripts/Noise.cs" />
-      <File FileName="Assets/Scripts/FalloffGenerator.cs" Line="6" Column="5" />
+      <File FileName="Assets/Scripts/MapGenerator.cs" Line="75" Column="40" />
+      <File FileName="Assets/Scripts/MeshGenerator.cs" Line="89" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -14,7 +11,7 @@
             <Node name="Assets" expanded="True">
               <Node name="Editor" expanded="True" />
               <Node name="Scripts" expanded="True">
-                <Node name="FalloffGenerator.cs" selected="True" />
+                <Node name="MeshGenerator.cs" selected="True" />
               </Node>
             </Node>
           </Node>
