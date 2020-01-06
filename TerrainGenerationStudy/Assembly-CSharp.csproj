@@ -63,12 +63,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\CameraController.cs" />
     <Compile Include="Assets\Scripts\EndlessTerrain.cs" />
     <Compile Include="Assets\Scripts\FalloffGenerator.cs" />
+    <Compile Include="Assets\Scripts\HideOnPlay.cs" />
     <Compile Include="Assets\Scripts\MapDisplay.cs" />
     <Compile Include="Assets\Scripts\MapGenerator.cs" />
     <Compile Include="Assets\Scripts\MeshGenerator.cs" />
     <Compile Include="Assets\Scripts\Noise.cs" />
+    <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\Scripts\TextureGenerator.cs" />
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>/Users/emicb/Documents/GitHub/TerrainGenerationStudy/TerrainGenerationStudy/Library/ScriptAssemblies/Unity.TextMeshPro.Editor.dll</HintPath>

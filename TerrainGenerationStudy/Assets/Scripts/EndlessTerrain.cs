@@ -5,7 +5,7 @@ using UnityEngine;
 // attatch to game object
 public class EndlessTerrain : MonoBehaviour {
     // scale terrain uniformly
-    const float scale = 1.0f;
+    const float scale = 2.0f;
 
     // store info for diffrent detail levels
     public LODInfo[] detailLevels;
@@ -101,6 +101,7 @@ public class EndlessTerrain : MonoBehaviour {
         GameObject meshObject;
         MeshRenderer meshRenderer;
         MeshFilter meshFilter;
+        MeshCollider meshCollider;
 
         // position (x, z) of chunk in scene
         Vector2 position;
@@ -111,6 +112,7 @@ public class EndlessTerrain : MonoBehaviour {
         // keep track of detail levels and corresponding info and meshes
         LODInfo[] detailLevels;
         LODMesh[] lodMeshes;
+        LODMesh collisionLODMesh;
 
         // to store map data when recieved and bool to check if recieved
         MapData mapData;
@@ -134,6 +136,8 @@ public class EndlessTerrain : MonoBehaviour {
             meshObject = new GameObject("Terrain Chunk");
             meshRenderer = meshObject.AddComponent<MeshRenderer>();
             meshFilter = meshObject.AddComponent<MeshFilter>();
+            meshCollider = meshObject.AddComponent<MeshCollider>();
+
             meshRenderer.material = material;
             meshObject.transform.position = positionV3 * scale;
             meshObject.transform.localScale = Vector3.one * scale;
@@ -151,6 +155,10 @@ public class EndlessTerrain : MonoBehaviour {
             for (int i = 0; i < detailLevels.Length; i++) {
                 // create new level of detail mesh
                 lodMeshes[i] = new LODMesh(detailLevels[i].lod, UpdateTerrainChunk);
+                // store reference to LOD mash used for colliders
+                if (detailLevels[i].useForCollider) {
+                    collisionLODMesh = lodMeshes[i];
+                }
             }
 
             // get map data from map generator
@@ -208,6 +216,18 @@ public class EndlessTerrain : MonoBehaviour {
                         // request mesh if not yet requested
                         else if (!lodMesh.hasRequestedMesh) {
                             lodMesh.RequestMesh(mapData);
+                        }
+                    }
+
+                    // check if player close enough for terrain to be rendered at highest resolution, then add colisions
+                    if (lodIndex == 0) {
+                        // if the lower resolution mesh exists, use it
+                        if (collisionLODMesh.hasMesh) {
+                            meshCollider.sharedMesh = collisionLODMesh.mesh;
+                        }
+                        // if lower resolution mesh has not been requested, request it
+                        else if (!collisionLODMesh.hasRequestedMesh) {
+                            collisionLODMesh.RequestMesh(mapData);
                         }
                     }
 
@@ -277,6 +297,7 @@ public class EndlessTerrain : MonoBehaviour {
     public struct LODInfo {
         public int lod;
         public float visibleDstThreshold;
+        public bool useForCollider;
     }
 }
 

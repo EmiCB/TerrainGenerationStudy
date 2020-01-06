@@ -87,6 +87,9 @@ public static class MeshGenerator {
 			}
 		}
 
+        // handle normals, puts normal calculations in this thread instead of main game
+        meshData.BakeNormals();
+
 		return meshData;
 	}
 }
@@ -98,6 +101,9 @@ public class MeshData {
     Vector3[] borderVertices;
 	int[] triangles;
     int[] borderTriangles;
+
+    // normals
+    Vector3[] bakedNormals;
 
     // store uvs to support adding textures
 	Vector2[] uvs;
@@ -224,6 +230,11 @@ public class MeshData {
         return Vector3.Cross(sideAB, sideAC).normalized;
     }
 
+    // calculate normals
+    public void BakeNormals() {
+        bakedNormals = CalculateNormals();
+    }
+
     // get mesh from mesh data
     public Mesh CreateMesh() {
         // create new mesh
@@ -235,7 +246,7 @@ public class MeshData {
 		mesh.uv = uvs;
 
         // fix lighting
-        mesh.normals = CalculateNormals();
+        mesh.normals = bakedNormals;
 
 		return mesh;
 	}
