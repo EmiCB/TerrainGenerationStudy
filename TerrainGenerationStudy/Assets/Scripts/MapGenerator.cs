@@ -13,9 +13,6 @@ public class MapGenerator : MonoBehaviour {
     // get normalize mode
     public Noise.NormalizeMode normalizeMode;
 
-    // size for each mesh chunk (was 241, but subtracted 2 since border adds 2)
-    public const int mapChunkSize = 239;
-
     // defines how many vertices to account for
     [Range(0,6)]                //make level of detail value into a slider
     public int editorPreviewLOD;
@@ -35,6 +32,9 @@ public class MapGenerator : MonoBehaviour {
     public float meshHeightMultiplier;
     public AnimationCurve meshHeightCurve;
 
+    // lighting method
+    public bool useFlatShading;
+
     // generation settings
     public bool useFalloff;
 
@@ -43,6 +43,9 @@ public class MapGenerator : MonoBehaviour {
 
     // list of terrain types
     public TerrainTypes[] regions;
+
+    // instance of map generator
+    static MapGenerator instance;
 
     // store falloff map
     float[,] falloffMap;
@@ -54,6 +57,22 @@ public class MapGenerator : MonoBehaviour {
     // runs once before game starts
     void Awake() {
         falloffMap = FalloffGenerator.GenerateFalloffMap(mapChunkSize);
+    }
+
+    // size for each mesh chunk
+    public static int mapChunkSize {
+        get {
+            // find instance of map generator
+            if (instance == null) {
+                instance = FindObjectOfType<MapGenerator>();
+            }
+            // needed smaller number, 96, for flatshading
+            if (instance.useFlatShading)
+                return 95;
+            // was 241, but subtracted 2 since border adds 2
+            else
+                return 239;
+        }
     }
 
     // checks draw mode and displays corresponding map in editor
@@ -72,7 +91,7 @@ public class MapGenerator : MonoBehaviour {
             display.DrawTexture(TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
         else if (drawMode == DrawMode.Mesh) {
-            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
+            display.DrawMesh(MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, editorPreviewLOD, useFlatShading), TextureGenerator.TextureFromColorMap(mapData.colorMap, mapChunkSize, mapChunkSize));
         }
         else if (drawMode == DrawMode.FalloffMap) {
             display.DrawTexture(TextureGenerator.TextureFromHeightMap(FalloffGenerator.GenerateFalloffMap(mapChunkSize)));
@@ -115,7 +134,7 @@ public class MapGenerator : MonoBehaviour {
     // threading for map data
     public void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback) {
         // make mesh data using giving map data 
-        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod);
+        MeshData meshData = MeshGenerator.GenerateTerrainMesh(mapData.heightMap, meshHeightMultiplier, meshHeightCurve, lod, useFlatShading);
 
         // add mesh data and callback to queue (locked to prevent multiple threads from executing at same time)
         lock (meshDataThreadInfoQueue) {
